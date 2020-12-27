@@ -901,7 +901,7 @@ QRFileTransfer.QRDecoder = class {
         let stream = null;
         try {
             // Use facingMode: environment to attempt to get the front camera on phones
-            let constraints = { audio: false, video: { width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 }, facingMode: {ideal: 'environment'}, frameRate: { ideal: this.fpsIdeal, max: this.fpsMax } } };
+            let constraints = { audio: false, video: { width: { min: 1280, ideal: 1920 }, height: { min: 720, ideal: 1080 }, facingMode: {ideal: 'user'}, frameRate: { ideal: this.fpsIdeal, max: this.fpsMax } } };
             stream = await navigator.mediaDevices.getUserMedia(constraints);
         } catch(err) { onSetupCompleted(false, err); return }
         

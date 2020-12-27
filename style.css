@@ -10,6 +10,11 @@ body {
     font-family: Arial, sans-serif;
 }
 
+a {
+    text-decoration: none;
+    color: darkblue;
+}
+
 .roundedBorder {
     border-radius: 20px;
     box-shadow:5px 5px 10px rgba(31, 73, 125, 0.4),0px 5px 5px rgba(31, 73, 125, 0.4);

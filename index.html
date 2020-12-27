@@ -1,0 +1,181 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
+        <link rel="stylesheet" href="style.css"/>
+        <script type="text/javascript" src="./js/qrcode.min.js"></script>
+        <script type="text/javascript" src="./js/jsQR.js"></script>
+        <script type="text/javascript" src="./js/QRFileTransfer.js"></script>
+    </head>
+    <body>
+
+        <!-- The Home view from which taking an action -->
+        <div id="homeBox" class="roundedBorder popup" style="display: none;">
+            <h2 style="text-align: center;">Welcome to QR File transfer</h2>
+            <p style="text-align: center;">Select the operation you want to perform on this device</p>
+            <div style="max-width: 200px; margin: 0 auto;">
+                <button class="buttonStyle" style="margin: 5px auto; width: 130px;" onclick="QRFileTransfer.Core.loadView(QRFileTransfer.Core.ViewOption.help)">Show Help</button>
+                <button class="buttonStyle" style="margin: 5px auto; width: 130px;" onclick="QRFileTransfer.Core.loadView(QRFileTransfer.Core.ViewOption.sendFile)">Send file</button>
+                <button class="buttonStyle" style="margin: 5px auto; width: 130px;" onclick="QRFileTransfer.Core.loadView(QRFileTransfer.Core.ViewOption.receiveFile)">Receive file</button>
+            </div>
+        </div>
+
+        <!-- The Help view with general information -->
+        <div id="helpBox" class="roundedBorder popup" style="display: none;">
+            <button class="buttonStyle" style="float:right;" onclick="QRFileTransfer.Core.closeHelp()">Close</button>
+            <h2 style="margin-top: 10px;">Help</h2>
+            <p style="margin: 0px;">
+                This tool allows you to transmit files between two devices relying <b>EXCLUSIVELY</b> on the Camera stream. Therefore the two devices can work both offline, regardless of the platform and the hardware configuration, as long as both have a working camera</br>
+                <b>Preconiditions:</b>
+                <ul>
+                    <li>Sender and Receiver devices have the camera access</li>
+                    <li>The two devices are one in front of each other, so that both the camera points to the other screen</li>
+                </ul>
+                <b>Reccomendations:</b>
+                <ul>
+                    <li>The distance between them is the shortest possible</li>
+                    <li>The two devices are fixed while the transmission is ongoning</li>
+                    <li>Make sure the QR images on both Sender and Receiver are <b>fully</b> visible. So, toggle the camera view if displaed, and make sure no window covers the web page while the process is going. In case this happens, the process will pause until the next valid QR image will be detected.</li>
+                    <li>Try to maintain the camera light the same while the process is going, to preserve the quality of the camera stream and simplify the work of QR images detection</li>
+                    <li>The bigger is the size of the chunk, the smaller will be the "squares" drawn within the QR image and harder will be for the camera to detect the QR images from the camera feed. On the other hand, if the camera quality is higher than average (eg. Full HD) then the resulting resolution should make the recognization on bigger chunks possible.</li>
+                </ul>
+                <b>How to use:</b> 
+                <ul>
+                    <li>The Receiver device starts the session from "Receive file"</li>
+                    <li>The Receiver device presses on "Start receiving" and allows the camera permission asked by the browser</li>
+                    <li>The Sender device starts the session from "Send file" and picks the file which is intended to be transmitted to the Receiver device</li>
+                    <li>The Sender device can change the chunk size if needed or just press directly on "Start sending" </li>
+                    <li>The Sender device allows the camera permission asked by the browser</li>
+                </ul>
+                <b>How does it work:</b> 
+                <ul>
+                    <li>The first QR image displayed by the Sender is providing the meta info so that the Receiver can detect it and configure itself, and start receiving the actual file chunks. Those meta info are file name, file size, number of chunks, chunk size, etc</li>
+                    <li>The Receiver replies displaying a QR image to notify the Sender to start displaying the QR image chunks</li>
+                    <li>The Sender starts displaying the QR Image for each file chunk</li>
+                    <li>For each QR Image recognized by the Receiver's camera, if this is a file chunk QR image, it will "reply" to the Sender by displaying another QR image with the hash (SHA-256) of the decoded file chunk.</li>
+                    <li>The Sender will detect the hash displayed by the Receiver and, if it matches with the expected hash value, it will proceed with the next chunk. If not, it will display a new QR image to the Receiver, providing the info that the last chunk was not valid and carrying over again the pending chunk to be detected and revalidated again (in this case the Receiver will drop the pending chunk in order to decode it again)</li>
+                    <li>When the last chunk is received on the Receiver and then validated back on the Sender, then a last QR image is sent notifying the Receiver that the transmission is completed.</li>
+                    <li>At this stage, the Receiver merges the collected chunks in a single Blob object and downloads it on the device's disk</li>
+                </ul>
+                <b>Dependencies:</b> 
+                <ul>
+                    <li>This tool is written using Vanilla Javascript, HTML and CSS, using the below  3rd-party libraries for QR encoding/decoding</li>
+                    <li><a href="https://github.com/davidshimjs/qrcodejs">qrcodejs</a> for QR encoding</li>
+                    <li><a href="https://github.com/cozmo/jsQR">jsQR</a> for QR decoding</li>
+                </ul>
+            </p>
+        </div>
+
+        <!-- The Sender view which is displayed in "Send file" mode -->
+        <div id="sendBox" class="roundedBorder view" style="display:none; height: 98%;">
+            <div style="float:left; margin-left:5px;"><h2 style="margin: 0px;">Send file</h2></div>
+            <button class="buttonStyle" style="float:right;" onclick="QRFileTransfer.Core.loadView(QRFileTransfer.Core.ViewOption.home)">Close</button>
+            <div style="clear:both; max-height: 180px; overflow-y: scroll;">
+                <table>
+                    <tr>
+                        <td width="25%"><b>Select&nbsp;a&nbsp;file</b></td>
+                        <td width="25%"><b>Chunk&nbsp;size</b></td>
+                        <td width="25%"></td>
+                        <td width="25%"></td>
+                    </tr>
+                    <tr>
+                        <td width="25%">
+                            <button id="btnInputFile" class="buttonStyle" onclick="document.getElementById('inputFile').click();">Browse</button>
+                            <input type="file" id="inputFile" style="display: none;"/>
+                        </td>
+                        <td width="25%" >
+                            <select id="inputChunkSize" style="width: 100%;" onchange="QRFileTransfer.Core.updateSenderChunkSize()">
+                                <option value="8">8 Bytes</option>
+                                <option value="16">16 Bytes</option>
+                                <option value="32">32 Bytes</option>
+                                <option value="64">64 Bytes</option>
+                                <option value="128" selected>128 Bytes</option>
+                                <option value="256">256 Bytes</option>
+                                <option value="512">512 Bytes</option>
+                            </select>
+                        </td>
+                        <td width="25%">
+                            <button id="btnStartSending" disabled class="buttonStyle" onclick="QRFileTransfer.Core.startSending()">Start sending</button>
+                        </td>
+                        <td width="25%"></td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>File</b></td>
+                        <td colspan="3" width="25%" id="lblFile">n/a</td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>Chunks</b></td>
+                        <td colspan="3" width="25%" id="lblChunkInfo">n/a</td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>Progress</b></td>
+                        <td width="25%" id="lblProgress" style="transition: all .1s ease-in-out;">n/a</td>
+                        <td width="25%"></td>
+                        <td width="25%"></td>
+                    </tr> 
+                    <tr>
+                        <td width="25%"><b>Elapsed&nbsp;time&nbsp;</b></td>
+                        <td colspan="3" width="25%" id="lblElapsTimeId">n/a</td>
+                    </tr>
+                </table>
+            </div>
+            <div id="senderQRView" class="qrBox qrBoxFull" style="display: none;"></div>
+            <canvas id="senderCameraCanvas" class="roundedBorder cameraBox" hidden></canvas>
+            <div id="togglesContainer" style="position: absolute; bottom: 15px;width: 96%; display: none; ">
+                <button class="buttonStyle" style="float: left;" onclick="QRFileTransfer.QRDecoder.toggleCameraFeedVisibilityWhileRunning()">Toggle camera</button>
+                <button class="buttonStyle" style="float: right;" onclick="QRFileTransfer.Core.toggleQRFullscreen()">Toggle QR</button>
+            </div>
+        </div>
+
+        <!-- The Receiver view which is displayed in "Receive file" mode -->
+        <div id="receiveBox" class="roundedBorder view" style="display: none; height: 98%;">
+            <div style="float:left; margin-left:5px;"><h2 style="margin: 0px;">Receive file</h2></div>
+            <button class="buttonStyle" style="float:right;" onclick="QRFileTransfer.Core.loadView(QRFileTransfer.Core.ViewOption.home)">Close</button>
+            <div style="clear:both; max-height: 180px; overflow-y: scroll;">
+                <table>
+                    <tr>
+                        <td width="25%">
+                            <button id="btnStartReceiving" class="buttonStyle" onclick="QRFileTransfer.Core.startReceiving()">Start receiving</button>
+                        </td>
+                        <td width="25%"></td>
+                        <td width="25%"></td>
+                        <td width="25%"></td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>File</b></td>
+                        <td colspan="3" width="25%" id="lblFile1">n/a</td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>Chunks</b></td>
+                        <td colspan="3" width="25%" id="lblChunkInfo1">n/a</td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>Progress</b></td>
+                        <td width="25%" id="lblProgress1">n/a</td>
+                        <td width="25%"></td>
+                        <td width="25%"></td>
+                    </tr>
+                    <tr>
+                        <td width="25%"><b>Elapsed&nbsp;time&nbsp;</b></td>
+                        <td colspan="3" width="25%" id="lblElapsTimeId1">n/a</td>
+                    </tr>
+                </table>
+            </div>
+            <div id="receiverQRView" class="qrBox qrBoxFull" style="display: none;"></div>
+            <canvas id="receiverCameraCanvas" class="roundedBorder cameraBox" hidden></canvas>
+            <div id="togglesContainer1" style="position: absolute; bottom: 15px;width: 96%; display: none;">
+                <button class="buttonStyle" style="float: left;" onclick="QRFileTransfer.QRDecoder.toggleCameraFeedVisibilityWhileRunning()">Toggle camera</button>
+                <button class="buttonStyle" style="float: right;" onclick="QRFileTransfer.Core.toggleQRFullscreen()">Toggle QR</button>
+            </div>
+        </div>
+
+        <script type="text/javascript">
+            window.onload = function () {
+                // Start showing the home view
+                QRFileTransfer.Core.loadView(QRFileTransfer.Core.ViewOption.home);
+            }
+        </script>
+
+    </body>
+</html>

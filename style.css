@@ -1,0 +1,84 @@
+* {
+    box-sizing: border-box;
+    -webkit-touch-callout: none;
+    -webkit-user-select: none;
+}
+
+body {
+    margin: 5px;
+    padding: 0px;
+    font-family: Arial, sans-serif;
+}
+
+.roundedBorder {
+    border-radius: 20px;
+    box-shadow:5px 5px 10px rgba(31, 73, 125, 0.4),0px 5px 5px rgba(31, 73, 125, 0.4);
+    -moz-box-shadow:5px 5px 10px rgba(31, 73, 125, 0.4),0px 5px 5px rgba(31, 73, 125, 0.4);
+    -webkit-box-shadow:5px 5px 10px rgba(31, 73, 125, 0.4),0px 5px 5px rgba(31, 73, 125, 0.4);
+    -o-box-shadow:5px 5px 10px rgba(31, 73, 125, 0.4),0px 5px 5px rgba(31, 73, 125, 0.4);
+}
+
+.popup {
+    width: 50%;
+    background-color: lightblue; 
+    padding: 10px;
+    margin: 0 auto; 
+    position: absolute; 
+    left: 25%; 
+}
+
+.view {
+    width: 96%;
+    background-color: lightblue; 
+    padding: 10px;
+    margin: 0 auto; 
+    position: absolute; 
+    left: 2%; 
+}
+
+.buttonStyle {
+    display: block;
+    text-align: center;
+    text-decoration: none;
+    background-color:rgb(0, 128, 128);
+    border-radius: 10px;
+    border: none;
+    color: white;
+    min-height: 40px;
+    font-size: 16px;    
+    transition: all .1s ease-in-out; 
+    outline: none;
+    cursor: pointer;
+}
+.buttonStyle:hover:enabled { transform: scale(1.07); }
+.buttonStyle:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.qrBox {
+    position: absolute;
+    left: 0px;
+    right: 0px;
+    top: 240px;
+    bottom: 65px;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.75); 
+}
+
+.qrBoxFull { top: 0px; bottom: 0px; border-radius: 20px; }
+
+.cameraBox {
+    position: absolute; 
+    left:25%; 
+    bottom: 15px; 
+    width: 50%; 
+    object-fit: contain;
+}
+
+#infoBox ul { margin-top: 5px; margin-bottom: 7px; }
+
+@media only screen and (max-width: 480px) { 
+    .roundedBorder { border-radius: 10px; }
+    .popup {
+        width: 90%;
+        left: 5%; 
+    }
+}

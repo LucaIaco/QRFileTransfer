@@ -1,5 +1,5 @@
 # QRFileTransfer
-This tool allows you to transmit files between two devices relying <b>EXCLUSIVELY</b> on the Camera stream combined with QR image encoding/decoding. Therefore the two devices can work both offline, regardless of the platform and the hardware configuration, as long as both have a working camera</br>
+This tool allows you to transmit files between two devices relying <b>EXCLUSIVELY</b> on the Camera stream combined with QR image encoding/decoding. Therefore the two devices can work both offline, regardless of the platform and the hardware configuration, as long as both have a working camera.</br>
                 <b>Preconiditions:</b>
                 <ul>
                     <li>Sender and Receiver devices have the camera access</li>
@@ -33,6 +33,7 @@ This tool allows you to transmit files between two devices relying <b>EXCLUSIVEL
                 </ul>
                 <b>Dependencies:</b> 
                 <ul>
+                    <li>This tool is written using Vanilla Javascript, HTML and CSS, using the below  3rd-party libraries for QR encoding/decoding</li>
                     <li><a href="https://github.com/davidshimjs/qrcodejs">qrcodejs</a> for QR encoding</li>
                     <li><a href="https://github.com/cozmo/jsQR">jsQR</a> for QR decoding</li>
                 </ul>

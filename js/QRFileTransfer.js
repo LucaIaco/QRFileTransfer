@@ -38,38 +38,38 @@ QRFileTransfer.Core = class {
     /**
      * Currently displayed view on the screen
      */
-    static #displayedView = null;
+    static _displayedView = null;
 
     /**
      * Reference to the callback called when the user, in Sender mode, picks a file from the input type file
      */
-    static #onFileChanged = null;
+    static _onFileChanged = null;
 
     /**
      * Reference to the fileworker which is processing the file
      */
-    static #fileWorker = null;
+    static _fileWorker = null;
 
     /**
      * Indicates if the Sender/Receiver is currently running
      */
-    static #isRunning = false;
+    static _isRunning = false;
 
     /**
      * The date time value carried by the last received QR Code. this is needed in order to prevent the processing of the same qr code multiple time
      * in case the Camera is processing the same QR Code.
      */
-    static #lastReceivedDatetime = null;
+    static _lastReceivedDatetime = null;
 
     /**
      * The Sender/Receiver Datetime when the process started
      */
-    static #startDate = null;
+    static _startDate = null;
 
     /**
      * The timer used for updating and displaying the elapse time
      */
-    static #elapseTimer = null;
+    static _elapseTimer = null;
 
     /**
      * Enum for the supported Display view options.
@@ -127,15 +127,15 @@ QRFileTransfer.Core = class {
         // remove andy display:none in order to show up the view
         div.style.display = null;
 
-        let previousView = this.#displayedView;
+        let previousView = this._displayedView;
 
         // keep track of the displaying view except of help view
         if (view != QRFileTransfer.Core.ViewOption.help){
-            this.#displayedView = view
+            this._displayedView = view
         }
 
         // If the view is not already shown, do any necessary custom action
-        if (this.#displayedView !== null && this.#displayedView != previousView) {
+        if (this._displayedView !== null && this._displayedView != previousView) {
             switch (view){
                 case QRFileTransfer.Core.ViewOption.home: {
                     switch (previousView) {
@@ -146,11 +146,11 @@ QRFileTransfer.Core = class {
                     break;
                 }
                 case QRFileTransfer.Core.ViewOption.sendFile: {
-                    this.#setupSender();
+                    this._setupSender();
                     break;
                 }
                 case QRFileTransfer.Core.ViewOption.receiveFile: {
-                    this.#setupReceiver();
+                    this._setupReceiver();
                     break;
                 }
                 default: { break; }
@@ -162,7 +162,7 @@ QRFileTransfer.Core = class {
     /**
      * Displays the previously tracked view
      */
-    static closeHelp() { if (this.#displayedView !== null) { this.loadView(this.#displayedView); } }
+    static closeHelp() { if (this._displayedView !== null) { this.loadView(this._displayedView); } }
 
     /**
      * For the Sender mode only, it syncs the file worker size with the selected size option into the dropdown selection box, and updates the displayed meta info
@@ -170,11 +170,11 @@ QRFileTransfer.Core = class {
      * @public
      */
     static updateSenderChunkSize() {
-        if (this.#isSenderReceiverView() == false ) { return }
-        if (this.#fileWorker === null) { return }
+        if (this._isSenderReceiverView() == false ) { return }
+        if (this._fileWorker === null) { return }
         let customChunkSize = document.getElementById("inputChunkSize").value;
-        this.#fileWorker.updateChunkSize(parseInt(customChunkSize) != "NaN" ? parseInt(customChunkSize) : 128);
-        this.#updateMetaInformation();
+        this._fileWorker.updateChunkSize(parseInt(customChunkSize) != "NaN" ? parseInt(customChunkSize) : 128);
+        this._updateMetaInformation();
     }
 
     /**
@@ -183,27 +183,27 @@ QRFileTransfer.Core = class {
      * @public
      */
     static startSending() {
-        if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return }
-        if (QRFileTransfer.Core.#isRunning == true) { return }
+        if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return }
+        if (QRFileTransfer.Core._isRunning == true) { return }
         // disable the Buttons
         document.getElementById("btnInputFile").disabled = true;
         document.getElementById("inputChunkSize").disabled = true;
         document.getElementById("btnStartSending").disabled = true;
 
-        QRFileTransfer.QRDecoder.setupAndStart(QRFileTransfer.Core.#displayedView.cameraCanvasId, (result, error) => {
+        QRFileTransfer.QRDecoder.setupAndStart(QRFileTransfer.Core._displayedView.cameraCanvasId, (result, error) => {
             if (result == true) {
                 document.getElementById("togglesContainer").style.display = null;
-                QRFileTransfer.Core.#showElapsedTime(true);
-                QRFileTransfer.Core.#isRunning = true;
+                QRFileTransfer.Core._showElapsedTime(true);
+                QRFileTransfer.Core._isRunning = true;
                 // Start by sending the meta info in order for the Receiver to be set up
-                QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.metaInfo, JSON.stringify(QRFileTransfer.Core.#fileWorker.metaInfo()));
-                QRFileTransfer.Core.#updateProgresses();
+                QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.metaInfo, JSON.stringify(QRFileTransfer.Core._fileWorker.metaInfo()));
+                QRFileTransfer.Core._updateProgresses();
             } else {
                 // reset and setup the sender again
                 // TODO: notify also the user about the camera feed issue 
                 QRFileTransfer.Core.stopSending();
             }
-        }, QRFileTransfer.Core.#onQRDataReceived)
+        }, QRFileTransfer.Core._onQRDataReceived)
     }
 
     /**
@@ -211,7 +211,7 @@ QRFileTransfer.Core = class {
      */
     static stopSending() {
         QRFileTransfer.QRDecoder.stop();
-        QRFileTransfer.Core.#setupSender();
+        QRFileTransfer.Core._setupSender();
     }
 
     /**
@@ -220,21 +220,21 @@ QRFileTransfer.Core = class {
      * @public
      */
     static startReceiving() {
-        if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return }
-        if (QRFileTransfer.Core.#isRunning == true) { return }
+        if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return }
+        if (QRFileTransfer.Core._isRunning == true) { return }
         // disable the Buttons
         document.getElementById("btnStartReceiving").disabled = true;
-        QRFileTransfer.QRDecoder.setupAndStart(QRFileTransfer.Core.#displayedView.cameraCanvasId, (result, error) => {
+        QRFileTransfer.QRDecoder.setupAndStart(QRFileTransfer.Core._displayedView.cameraCanvasId, (result, error) => {
             if (result == true){
                 document.getElementById("togglesContainer1").style.display = null;
-                QRFileTransfer.Core.#showElapsedTime(true);
-                QRFileTransfer.Core.#isRunning = true;
+                QRFileTransfer.Core._showElapsedTime(true);
+                QRFileTransfer.Core._isRunning = true;
             } else {
                 // reset and setup the sender again
                 // TODO: notify also the user about the camera feed issue 
                 QRFileTransfer.Core.stopReceiving();
             }
-        }, QRFileTransfer.Core.#onQRDataReceived)
+        }, QRFileTransfer.Core._onQRDataReceived)
     }
 
     /**
@@ -244,18 +244,18 @@ QRFileTransfer.Core = class {
      */
     static stopReceiving() {
         QRFileTransfer.QRDecoder.stop();
-        QRFileTransfer.Core.#setupReceiver();
+        QRFileTransfer.Core._setupReceiver();
     }
 
     /**
      * Toggles the Displayed QR Code from reduced to full screen
      */
     static toggleQRFullscreen() {
-        let classList = document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).classList;
+        let classList = document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).classList;
         if (classList.contains("qrBoxFull") === true) {
-            document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).classList.remove("qrBoxFull");
+            document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).classList.remove("qrBoxFull");
         } else {
-            document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).classList.add("qrBoxFull");
+            document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).classList.add("qrBoxFull");
         }
     }
 
@@ -263,20 +263,20 @@ QRFileTransfer.Core = class {
      * Starts/Stops the timer for displaying and updating the elapsed time
      * @param {Boolean} start whether the timer should start or stop running
      */
-    static #showElapsedTime(start) {
-        if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return }
+    static _showElapsedTime(start) {
+        if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return }
         if (start === true) {
-            this.#startDate = Date.now();
-            document.getElementById(QRFileTransfer.Core.#displayedView.lblElapsTimeId).innerHTML = QRFileTransfer.Utils.elapsedTime(this.#startDate);
-            this.#elapseTimer = setInterval(() => {
-                if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return }
-                document.getElementById(QRFileTransfer.Core.#displayedView.lblElapsTimeId).innerHTML = QRFileTransfer.Utils.elapsedTime(this.#startDate);
+            this._startDate = Date.now();
+            document.getElementById(QRFileTransfer.Core._displayedView.lblElapsTimeId).innerHTML = QRFileTransfer.Utils.elapsedTime(this._startDate);
+            this._elapseTimer = setInterval(() => {
+                if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return }
+                document.getElementById(QRFileTransfer.Core._displayedView.lblElapsTimeId).innerHTML = QRFileTransfer.Utils.elapsedTime(this._startDate);
             }, 1000);
         }else {
-            clearInterval(this.#elapseTimer);
-            this.#elapseTimer = null;
-            this.#startDate = null;
-            document.getElementById(QRFileTransfer.Core.#displayedView.lblElapsTimeId).innerHTML = "n/a";
+            clearInterval(this._elapseTimer);
+            this._elapseTimer = null;
+            this._startDate = null;
+            document.getElementById(QRFileTransfer.Core._displayedView.lblElapsTimeId).innerHTML = "n/a";
         }
     }
 
@@ -285,13 +285,13 @@ QRFileTransfer.Core = class {
      * 
      * @private
      */
-    static #reset() {
-        this.#isRunning = false;
-        this.#fileWorker = null;
-        this.#showElapsedTime(false);
-        this.#updateMetaInformation(null);
-        this.#updateProgresses();
-        this.#updateQRImage(null, null);
+    static _reset() {
+        this._isRunning = false;
+        this._fileWorker = null;
+        this._showElapsedTime(false);
+        this._updateMetaInformation(null);
+        this._updateProgresses();
+        this._updateQRImage(null, null);
     }
 
     /**
@@ -300,19 +300,19 @@ QRFileTransfer.Core = class {
      * @private
      * @return {Boolean} true if the contion is met
      */
-    static #isSenderReceiverView() { return (this.#displayedView == QRFileTransfer.Core.ViewOption.sendFile || this.#displayedView == QRFileTransfer.Core.ViewOption.receiveFile ) }
+    static _isSenderReceiverView() { return (this._displayedView == QRFileTransfer.Core.ViewOption.sendFile || this._displayedView == QRFileTransfer.Core.ViewOption.receiveFile ) }
 
     /**
 	 * Displays/Updates the meta information of the file which is getting processed
 	 * 
 	 * @private
 	 */
-    static #updateMetaInformation() {
-        if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return }
+    static _updateMetaInformation() {
+        if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return }
         let metaInfo = null;
-        if (QRFileTransfer.Core.#fileWorker !== null) { metaInfo = QRFileTransfer.Core.#fileWorker.metaInfo(); }
-        document.getElementById(QRFileTransfer.Core.#displayedView.lblFileId).innerHTML = (metaInfo === null ? "n/a" : metaInfo.fileName + " (" + QRFileTransfer.Utils.formatBytes(metaInfo.fileSize) + ")");
-        document.getElementById(QRFileTransfer.Core.#displayedView.lblChunkInfoId).innerHTML = (metaInfo === null ? "n/a" : metaInfo.fileChunks + " (" + QRFileTransfer.Utils.formatBytes(metaInfo.chunkSize) + " each)");
+        if (QRFileTransfer.Core._fileWorker !== null) { metaInfo = QRFileTransfer.Core._fileWorker.metaInfo(); }
+        document.getElementById(QRFileTransfer.Core._displayedView.lblFileId).innerHTML = (metaInfo === null ? "n/a" : metaInfo.fileName + " (" + QRFileTransfer.Utils.formatBytes(metaInfo.fileSize) + ")");
+        document.getElementById(QRFileTransfer.Core._displayedView.lblChunkInfoId).innerHTML = (metaInfo === null ? "n/a" : metaInfo.fileChunks + " (" + QRFileTransfer.Utils.formatBytes(metaInfo.chunkSize) + " each)");
     }
 
     /**
@@ -320,15 +320,15 @@ QRFileTransfer.Core = class {
 	 * 
 	 * @private
 	 */
-    static #updateProgresses() {
-        if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return }
+    static _updateProgresses() {
+        if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return }
         // Display default state if not running
-        if (QRFileTransfer.Core.#isRunning == false) {
-            document.getElementById(QRFileTransfer.Core.#displayedView.lblProgressId).innerHTML = "n/a";
+        if (QRFileTransfer.Core._isRunning == false) {
+            document.getElementById(QRFileTransfer.Core._displayedView.lblProgressId).innerHTML = "n/a";
             return;
         }
-        if (QRFileTransfer.Core.#fileWorker !== null) {
-            document.getElementById(QRFileTransfer.Core.#displayedView.lblProgressId).innerHTML = (QRFileTransfer.Core.#fileWorker.progress() * 100).toFixed(2) + " % (" + QRFileTransfer.Core.#fileWorker.curChunk + ")";
+        if (QRFileTransfer.Core._fileWorker !== null) {
+            document.getElementById(QRFileTransfer.Core._displayedView.lblProgressId).innerHTML = (QRFileTransfer.Core._fileWorker.progress() * 100).toFixed(2) + " % (" + QRFileTransfer.Core._fileWorker.curChunk + ")";
         }
     }
 
@@ -340,14 +340,14 @@ QRFileTransfer.Core = class {
      * @param {String} input the body content of the generating QR Code
      * 
 	 */
-    static #updateQRImage(chunkType, input) {
-        if (QRFileTransfer.Core.#isSenderReceiverView() == false ) { return; }
-        if (input === null && document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).getElementsByTagName("img").length > 0 ) {
-            document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).style.display = "none";
-            document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).getElementsByTagName("img")[0].src = "";
+    static _updateQRImage(chunkType, input) {
+        if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return; }
+        if (input === null && document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).getElementsByTagName("img").length > 0 ) {
+            document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).style.display = "none";
+            document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).getElementsByTagName("img")[0].src = "";
             return;
         }
-        document.getElementById(QRFileTransfer.Core.#displayedView.qrViewId).style.display = null;
+        document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).style.display = null;
         let qrData = { "ckTId" : chunkType.id, "bd": input.trim(), "dt": Date.now() }
         
         QRFileTransfer.Utils.generateQRCode(JSON.stringify(qrData));
@@ -357,7 +357,7 @@ QRFileTransfer.Core = class {
      * Convenience method which returns the enum chunk type from the given chunk type identifier
      * @param {Number} id 
      */
-    static #chunkTypeFromId(id) { 
+    static _chunkTypeFromId(id) { 
         switch (id) {
             case 0: { return QRFileTransfer.Core.ChunkType.metaInfo; } 
             case 1: { return QRFileTransfer.Core.ChunkType.metaInfoReceived; } 
@@ -375,8 +375,8 @@ QRFileTransfer.Core = class {
      * @private
      * @param {String} rawData 
      */
-    static async #onQRDataReceived(rawData) {
-        if (QRFileTransfer.Core.#isRunning == false) { return }
+    static async _onQRDataReceived(rawData) {
+        if (QRFileTransfer.Core._isRunning == false) { return }
         if (rawData === null) { return }
         let jsonData = rawData.trim();
         if (jsonData.length == 0 ) { return }
@@ -386,57 +386,57 @@ QRFileTransfer.Core = class {
         // Make sure is a valid object with expectable properties
         if (jsObj["ckTId"] === undefined || jsObj["bd"] === undefined || jsObj["dt"] === undefined) { return }
         // extract the chunk type and the chunk data
-        let chunkType = QRFileTransfer.Core.#chunkTypeFromId(jsObj["ckTId"]);
+        let chunkType = QRFileTransfer.Core._chunkTypeFromId(jsObj["ckTId"]);
         let qrData = jsObj["bd"];
         let datetime = jsObj["dt"];
 
-        let previousDatetime = QRFileTransfer.Core.#lastReceivedDatetime;
+        let previousDatetime = QRFileTransfer.Core._lastReceivedDatetime;
         // Update the date time for the next cycle
-        QRFileTransfer.Core.#lastReceivedDatetime = datetime;
+        QRFileTransfer.Core._lastReceivedDatetime = datetime;
 
         // Ignore the qr data if is the same exact one of the previous acquired qr code from the camera feed.
-        if (previousDatetime === QRFileTransfer.Core.#lastReceivedDatetime) { return }
+        if (previousDatetime === QRFileTransfer.Core._lastReceivedDatetime) { return }
         
-        switch (QRFileTransfer.Core.#displayedView) {
+        switch (QRFileTransfer.Core._displayedView) {
             case QRFileTransfer.Core.ViewOption.sendFile: {
                 switch (chunkType) {
 
                     // The Receiver confirmed that meta info were received. The Sender can now start sending the chunks
                     case QRFileTransfer.Core.ChunkType.metaInfoReceived: {
-                        if (QRFileTransfer.Core.#fileWorker === null) { return }
+                        if (QRFileTransfer.Core._fileWorker === null) { return }
                         console.log("QRFileTransfer.Core.ChunkType.metaInfoReceived");
                         // Read the next file chunk and updates the file worker internal states
-                        await QRFileTransfer.Core.#fileWorker.readNextChunk();
+                        await QRFileTransfer.Core._fileWorker.readNextChunk();
                         // Display a new QR Code with the new chunk data for the Receiver to be decoded
-                        QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.okNext, QRFileTransfer.Core.#fileWorker.lastChunkBase64);
-                        QRFileTransfer.Core.#updateProgresses();
+                        QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.okNext, QRFileTransfer.Core._fileWorker.lastChunkBase64);
+                        QRFileTransfer.Core._updateProgresses();
                         break;
                     }
                     // The Receiver provided the SHA-256 of the last received chunk data. The sender will evaluate it against his last SHA-256 and, if valid, will continue with the next chunk, otherwise will notify the Receiver that the data was corrupted during his decoding
                     case QRFileTransfer.Core.ChunkType.evalSha256: {
-                        if (QRFileTransfer.Core.#fileWorker === null) { return }
+                        if (QRFileTransfer.Core._fileWorker === null) { return }
                         console.log("QRFileTransfer.Core.ChunkType.evalSha256");
                         let receiverChunkSha256 = qrData;
-                        if (receiverChunkSha256 == QRFileTransfer.Core.#fileWorker.lastChunkSha256) {
+                        if (receiverChunkSha256 == QRFileTransfer.Core._fileWorker.lastChunkSha256) {
 
                             // if the last sent chunk was the last expected one then the file transfer should be considered done.
-                            if (QRFileTransfer.Core.#fileWorker.curChunk == QRFileTransfer.Core.#fileWorker.fileChunks) {
+                            if (QRFileTransfer.Core._fileWorker.curChunk == QRFileTransfer.Core._fileWorker.fileChunks) {
 
                                 // Display a new QR Code with the new chunk data for the Receiver to be decoded, so that the process will be considered done
-                                QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.completed, "");
+                                QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.completed, "");
                                 // Stop the Sender session after a couple of seconds, just to give time to the Receiver to detect the 'completed' QR Code signal
                                 // If the receiver misses this, it will stuck and will require a manual completionon the Receiver side
                                 setTimeout(() => { QRFileTransfer.Core.stopSending(); }, 2000);
                             } else {
-                                await QRFileTransfer.Core.#fileWorker.readNextChunk();
+                                await QRFileTransfer.Core._fileWorker.readNextChunk();
                                 // Display a new QR Code with the new chunk data for the Receiver to be decoded, so that the previous chunk will be considered valid
-                                QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.okNext, QRFileTransfer.Core.#fileWorker.lastChunkBase64);
-                                QRFileTransfer.Core.#updateProgresses();
+                                QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.okNext, QRFileTransfer.Core._fileWorker.lastChunkBase64);
+                                QRFileTransfer.Core._updateProgresses();
                             }
                         } else {
                             // Display a new QR Code with the new chunk data for the Receiver to be decoded, invalididating the last chunk and trying again with this
-                            QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.invalidSha256, QRFileTransfer.Core.#fileWorker.lastChunkBase64);
-                            QRFileTransfer.Core.#updateProgresses();
+                            QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.invalidSha256, QRFileTransfer.Core._fileWorker.lastChunkBase64);
+                            QRFileTransfer.Core._updateProgresses();
                         }
                         break;
                     }
@@ -451,49 +451,49 @@ QRFileTransfer.Core = class {
                     // The Sender started the file transfering session by providing the meta info needed to setup the FileWorker on the Receiver side
                     case QRFileTransfer.Core.ChunkType.metaInfo: {
                         // Prevent to receive a different meta info if one has been already provided for this session
-                        if (QRFileTransfer.Core.#fileWorker !== null) { return }
+                        if (QRFileTransfer.Core._fileWorker !== null) { return }
                         console.log("QRFileTransfer.Core.ChunkType.metaInfo");
                         let senderMetaInfo = null;
                         try { senderMetaInfo = JSON.parse(qrData); } catch (e) { return }
-                        QRFileTransfer.Core.#fileWorker = QRFileTransfer.FileWorker.createWriter(senderMetaInfo);
-                        QRFileTransfer.Core.#updateMetaInformation();
-                        QRFileTransfer.Core.#updateProgresses();
+                        QRFileTransfer.Core._fileWorker = QRFileTransfer.FileWorker.createWriter(senderMetaInfo);
+                        QRFileTransfer.Core._updateMetaInformation();
+                        QRFileTransfer.Core._updateProgresses();
                         // Display a new QR Code to notify the sender that the metadata has been successfully received, so the chunk transfering can start
-                        QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.metaInfoReceived, "");
+                        QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.metaInfoReceived, "");
                         break;
                     }
                     // The Sender provided a new file chunk to be appended to the Receiver buffer. The Receiver will provide the SHA-256 of it in order for the Sender to validate it and continue with the next chunk if needed
                     case QRFileTransfer.Core.ChunkType.okNext: {
                         // Prevent to process a file chunk if no FileWorker instance exists. If null means that no meta info was was provided
-                        if (QRFileTransfer.Core.#fileWorker === null) { return }
+                        if (QRFileTransfer.Core._fileWorker === null) { return }
                         console.log("QRFileTransfer.Core.ChunkType.okNext");
-                        QRFileTransfer.Core.#fileWorker.writerCommitPendingChunk();
-                        await QRFileTransfer.Core.#fileWorker.writerSetPendingChunk(qrData);
-                        QRFileTransfer.Core.#updateProgresses();
+                        QRFileTransfer.Core._fileWorker.writerCommitPendingChunk();
+                        await QRFileTransfer.Core._fileWorker.writerSetPendingChunk(qrData);
+                        QRFileTransfer.Core._updateProgresses();
                         // Display a new QR Code to notify the sender that a new chunk has been provided and there's the sha-256 to be evaluated back from it
-                        QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.evalSha256, QRFileTransfer.Core.#fileWorker.lastChunkSha256);
+                        QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.evalSha256, QRFileTransfer.Core._fileWorker.lastChunkSha256);
                         break;
                     }
                     // The Sender provided a new file chunk to be appended to the Receiver buffer indicating to drop the last one as was invalid based on the provided SHA-256. The Receiver will drop the last chunk, set a new pending one and provide the SHA-256 of it in order for the Sender to re-validate it and continue with the next chunk if needed
                     case QRFileTransfer.Core.ChunkType.invalidSha256: {
                         // Prevent to process a file chunk if no FileWorker instance exists. If null means that no meta info was was provided
-                        if (QRFileTransfer.Core.#fileWorker === null) { return }
+                        if (QRFileTransfer.Core._fileWorker === null) { return }
                         console.log("QRFileTransfer.Core.ChunkType.invalidSha256");
-                        await QRFileTransfer.Core.#fileWorker.writerSetPendingChunk(qrData);
-                        QRFileTransfer.Core.#updateProgresses();
+                        await QRFileTransfer.Core._fileWorker.writerSetPendingChunk(qrData);
+                        QRFileTransfer.Core._updateProgresses();
                         // Display a new QR Code to notify the sender that a new chunk has been provided and there's the sha-256 to be evaluated back from it
-                        QRFileTransfer.Core.#updateQRImage(QRFileTransfer.Core.ChunkType.evalSha256, QRFileTransfer.Core.#fileWorker.lastChunkSha256);
+                        QRFileTransfer.Core._updateQRImage(QRFileTransfer.Core.ChunkType.evalSha256, QRFileTransfer.Core._fileWorker.lastChunkSha256);
                         break;
                     }
                     // The Sender notified that the file transfer session is over, so we should stop the Camera feed and write the data on the disk
                     case QRFileTransfer.Core.ChunkType.completed: {
                         // Prevent to process a file chunk if no FileWorker instance exists. If null means that no meta info was was provided
-                        if (QRFileTransfer.Core.#fileWorker === null) { return }
+                        if (QRFileTransfer.Core._fileWorker === null) { return }
                         console.log("QRFileTransfer.Core.ChunkType.completed");
                         // Commit the last pending block before proceeding
-                        QRFileTransfer.Core.#fileWorker.writerCommitPendingChunk();
+                        QRFileTransfer.Core._fileWorker.writerCommitPendingChunk();
                         // Write the data on disk and stop the session
-                        await QRFileTransfer.Core.#fileWorker.writerDownloadFile();
+                        await QRFileTransfer.Core._fileWorker.writerDownloadFile();
                         // Stop the Receiver session
                         QRFileTransfer.Core.stopReceiving();
                         break;
@@ -511,9 +511,9 @@ QRFileTransfer.Core = class {
      * 
      * @public
      */
-    static #setupSender() {
+    static _setupSender() {
         // Attach the view which needs to be used for displaying the generated QR Codes
-        QRFileTransfer.Utils.setQRCodeViewer(QRFileTransfer.Core.#displayedView.qrViewId,512,512);
+        QRFileTransfer.Utils.setQRCodeViewer(QRFileTransfer.Core._displayedView.qrViewId,512,512);
 
         // Configure the controls to the initial state
         document.getElementById("btnInputFile").disabled = false;
@@ -523,17 +523,17 @@ QRFileTransfer.Core = class {
 
         let fileSelector = document.getElementById("inputFile");
         // Remove any previously attached observer and selected file
-        if (QRFileTransfer.Core.#onFileChanged !== null) {
-            fileSelector.removeEventListener("change", QRFileTransfer.Core.#onFileChanged);
+        if (QRFileTransfer.Core._onFileChanged !== null) {
+            fileSelector.removeEventListener("change", QRFileTransfer.Core._onFileChanged);
             fileSelector.value = "";
         }
         // Reset the interface and the file worker
-        QRFileTransfer.Core.#reset();
+        QRFileTransfer.Core._reset();
         
         // Attach a new observer for the file picker change 
-        QRFileTransfer.Core.#onFileChanged = (event) => {
+        QRFileTransfer.Core._onFileChanged = (event) => {
             let files = event.target.files;
-            QRFileTransfer.Core.#reset();
+            QRFileTransfer.Core._reset();
             // If no file was selected, then abort
             if (files === null || files.length == 0) { 
                 // disable the 'Start sending' button and 'Chunk size'
@@ -543,18 +543,18 @@ QRFileTransfer.Core = class {
             }
             document.getElementById("inputChunkSize").disabled = false;
             // create the file worked based on the selected file
-            QRFileTransfer.Core.#fileWorker = QRFileTransfer.FileWorker.createReader(files[0]);
+            QRFileTransfer.Core._fileWorker = QRFileTransfer.FileWorker.createReader(files[0]);
             
             // apply chunk size
             let customChunkSize = document.getElementById("inputChunkSize").value;
-            QRFileTransfer.Core.#fileWorker.updateChunkSize(parseInt(customChunkSize) != "NaN" ? parseInt(customChunkSize) : 128);
+            QRFileTransfer.Core._fileWorker.updateChunkSize(parseInt(customChunkSize) != "NaN" ? parseInt(customChunkSize) : 128);
 
             // update the meta information on the screen
-            QRFileTransfer.Core.#updateMetaInformation();
+            QRFileTransfer.Core._updateMetaInformation();
             // enable the 'Start sending' button and disable the dropdown
             document.getElementById("btnStartSending").disabled = false;
         }
-        fileSelector.addEventListener('change', QRFileTransfer.Core.#onFileChanged);
+        fileSelector.addEventListener('change', QRFileTransfer.Core._onFileChanged);
     }
 
     /**
@@ -562,16 +562,16 @@ QRFileTransfer.Core = class {
      * 
      * @public
      */
-    static #setupReceiver() {
+    static _setupReceiver() {
         // Attach the view which needs to be used for displaying the generated QR Codes
-        QRFileTransfer.Utils.setQRCodeViewer(QRFileTransfer.Core.#displayedView.qrViewId,512,512);
+        QRFileTransfer.Utils.setQRCodeViewer(QRFileTransfer.Core._displayedView.qrViewId,512,512);
 
         // Configure the control to the initial state
         document.getElementById("btnStartReceiving").disabled = false;
         document.getElementById("togglesContainer1").style.display = "none";
 
         // Reset the interface and the file worker
-        QRFileTransfer.Core.#reset();
+        QRFileTransfer.Core._reset();
     }
 
 }
@@ -584,7 +584,7 @@ QRFileTransfer.Utils = class {
     /**
      * The private reference to the QRCode object in charge of processing the qr code images
      */
-    static #qrCode = null;
+    static _qrCode = null;
 
     /**
 	 * set the qr code view which will display any generated qr code image on the screen
@@ -599,7 +599,7 @@ QRFileTransfer.Utils = class {
     static setQRCodeViewer(domID,qrImageWidth,qrImageHeight) {
         if (document.getElementById(domID) === null) { return false }
         document.getElementById(domID).innerHTML = "";
-        QRFileTransfer.Utils.#qrCode = new QRCode(document.getElementById(domID), {
+        QRFileTransfer.Utils._qrCode = new QRCode(document.getElementById(domID), {
             width : qrImageWidth,
             height : qrImageHeight,
             correctLevel : QRCode.CorrectLevel.M
@@ -616,9 +616,9 @@ QRFileTransfer.Utils = class {
      * @return {Boolean} true if the QR Code viewer could be generated, false if no qr code object was setup 
 	 */
     static generateQRCode(input) {
-        if (QRFileTransfer.Utils.#qrCode === null) { return false }   
+        if (QRFileTransfer.Utils._qrCode === null) { return false }   
         try {
-            QRFileTransfer.Utils.#qrCode.makeCode(input);
+            QRFileTransfer.Utils._qrCode.makeCode(input);
             return true;
         } catch(e) {
             console.error("Unable to generate the QR from the input (" + input.length + " Bytes). " + e)
@@ -719,12 +719,12 @@ QRFileTransfer.FileWorker = class {
     /**
      * the reference to the file to be read
      */
-    #inputFile = null;
+    _inputFile = null;
 
     /**
      * the default chunk size to be read at every access
      */
-    #chunkSize = 128;
+    _chunkSize = 128;
 
     /**
      * the referred file MIME type
@@ -770,9 +770,9 @@ QRFileTransfer.FileWorker = class {
      * For the readMode 'false' only, this is the in-memory array of Blob chunks which contains the overall data cumulated up to now which can be downloaded on the disk when 
      * required.
      */
-    #writerBuffer = [];
+    _writerBuffer = [];
 
-    #writerUrl = null;
+    _writerUrl = null;
     
     /**
      * Creates and return a new instance of the FileWorker configured for READING from the given file
@@ -783,7 +783,7 @@ QRFileTransfer.FileWorker = class {
      */
     static createReader(file){
         let worker = new QRFileTransfer.FileWorker();
-        worker.#inputFile = file;
+        worker._inputFile = file;
         worker.inputFileType = file.type.trim().length == 0 ? "application/octet-stream" : file.type;
         worker.inputFileName = file.name;
         worker.fileSize = file.size;
@@ -804,7 +804,7 @@ QRFileTransfer.FileWorker = class {
         worker.inputFileType = senderMetaInfo["fileType"];
         worker.inputFileName = senderMetaInfo["fileName"];
         worker.fileSize = senderMetaInfo["fileSize"];
-        worker.#chunkSize = senderMetaInfo["chunkSize"];
+        worker._chunkSize = senderMetaInfo["chunkSize"];
         worker.fileChunks = senderMetaInfo["fileChunks"];
         worker.readMode = false;
         return worker;
@@ -818,8 +818,8 @@ QRFileTransfer.FileWorker = class {
      */
     updateChunkSize(size) {
         if (this.readMode == false) { return }
-        this.#chunkSize = size;
-        this.fileChunks = Math.ceil(this.#inputFile.size/this.#chunkSize,this.#chunkSize);
+        this._chunkSize = size;
+        this.fileChunks = Math.ceil(this._inputFile.size/this._chunkSize,this._chunkSize);
     }
 
     /**
@@ -831,13 +831,13 @@ QRFileTransfer.FileWorker = class {
      * @return {Object} meta information object of the referred file.
 	 */
     metaInfo() {
-        if (this.readMode == true && this.#inputFile === null ) { return null; }
+        if (this.readMode == true && this._inputFile === null ) { return null; }
         let data = {};
         data["fileName"] = this.inputFileName;
         data["fileType"] = this.inputFileType;
         data["fileSize"] = this.fileSize;
         data["fileChunks"] = this.fileChunks;
-        data["chunkSize"] = this.#chunkSize;
+        data["chunkSize"] = this._chunkSize;
         return data;
     }
 
@@ -860,14 +860,14 @@ QRFileTransfer.FileWorker = class {
 	 */
     async readNextChunk() {
         if (this.readMode == false) { return }
-        if (this.#inputFile === null || this.curChunk >= this.fileChunks ) { 
+        if (this._inputFile === null || this.curChunk >= this.fileChunks ) { 
             this.lastChunkBlob = null;
             this.lastChunkBase64 = null;
             this.lastChunkSha256 = null;
             return
         }
-        let offset = this.curChunk * this.#chunkSize;
-        this.lastChunkBlob = this.#inputFile.slice(offset, offset + this.#chunkSize);
+        let offset = this.curChunk * this._chunkSize;
+        this.lastChunkBlob = this._inputFile.slice(offset, offset + this._chunkSize);
         this.lastChunkBase64 = await QRFileTransfer.Utils.blobAsBase64(this.lastChunkBlob);
         this.lastChunkSha256 = await QRFileTransfer.Utils.sha256(this.lastChunkBase64);
         this.curChunk += 1;
@@ -899,7 +899,7 @@ QRFileTransfer.FileWorker = class {
         if (this.readMode == true) { return }
         if (this.lastChunkBlob === null) { return }
         // append the new blob chunk to the buffer
-        this.#writerBuffer.push(this.lastChunkBlob);
+        this._writerBuffer.push(this.lastChunkBlob);
         this.lastChunkBlob = null;
         this.lastChunkBase64 = null;
         this.lastChunkSha256 = null;
@@ -912,15 +912,15 @@ QRFileTransfer.FileWorker = class {
      * @public
      */
     async writerDownloadFile() {
-        let a = await this.#writerCreateDownloadFile();
+        let a = await this._writerCreateDownloadFile();
         document.body.appendChild(a);
         a.style = 'display: none';
         a.click();
         let that = this;
         setTimeout(() => {
-          //window.URL.revokeObjectURL(that.#writerUrl);
+          //window.URL.revokeObjectURL(that._writerUrl);
           document.body.removeChild(a);
-          //that.#writerUrl = null;
+          //that._writerUrl = null;
         }, 1);
     }
 
@@ -929,15 +929,15 @@ QRFileTransfer.FileWorker = class {
      * 
      * @private
      */
-    #writerCreateDownloadFile() {
+    _writerCreateDownloadFile() {
         if (this.readMode == true) { return }
-        if (this.#writerBuffer === null) { return }
+        if (this._writerBuffer === null) { return }
         let that = this;
         let prom = new Promise(resolve => { 
-            let resultingFileBlob = new Blob(that.#writerBuffer, {type : that.inputFileType});
-            that.#writerUrl = window.URL.createObjectURL(resultingFileBlob);
+            let resultingFileBlob = new Blob(that._writerBuffer, {type : that.inputFileType});
+            that._writerUrl = window.URL.createObjectURL(resultingFileBlob);
             let aTag = document.createElement("a");
-            aTag.href = that.#writerUrl;
+            aTag.href = that._writerUrl;
             aTag.download = that.inputFileName;
             resolve(aTag); 
         });
@@ -963,7 +963,7 @@ QRFileTransfer.QRDecoder = class {
     /**
      * Indicates if the video session is running or not
      */
-    static #scanning = false;
+    static _scanning = false;
 
     /*
     Delay in milliseconds which is used to schedue the process of the next frame from the video stream
@@ -973,27 +973,27 @@ QRFileTransfer.QRDecoder = class {
     /**
      * Reference to the video object which is feeding the image stream
      */
-    static #video = null;
+    static _video = null;
 
     /**
      * Reference to the Canvas DOM element which will be used to render the camera feed
      */
-    static #canvasElement = null;
+    static _canvasElement = null;
 
     /**
      * Reference to the 2D context of 'canvasElement'
      */
-    static #canvasCtx = null;
+    static _canvasCtx = null;
 
     /**
      * Indicates if the camera canvas should be displayed on screen while the session is running
      */
-    static #showCameraWhileRunning = true;
+    static _showCameraWhileRunning = true;
 
     /**
      * The function to be called when a QR Code image is properly decoded and the correpsonding data need to be given back in this callback
      */
-    static #onQRCodeDetected = null;
+    static _onQRCodeDetected = null;
 
     /**
 	 * Setup and runs the Camera session in order to scan the image looking for any valid QR Code.
@@ -1005,7 +1005,7 @@ QRFileTransfer.QRDecoder = class {
 	 */
     static async setupAndStart(canvasId, onSetupCompleted, onQRCodeDetected) {
         if (onSetupCompleted === null) { return }
-        if (this.#scanning == true) { onSetupCompleted(false); return }
+        if (this._scanning == true) { onSetupCompleted(false); return }
 
         let stream = null;
         try {
@@ -1014,17 +1014,17 @@ QRFileTransfer.QRDecoder = class {
             stream = await navigator.mediaDevices.getUserMedia(constraints);
         } catch(err) { onSetupCompleted(false, err); return }
         
-        this.#canvasElement = document.getElementById(canvasId);
-        this.#canvasCtx = this.#canvasElement.getContext("2d");
+        this._canvasElement = document.getElementById(canvasId);
+        this._canvasCtx = this._canvasElement.getContext("2d");
         
-        this.#video = document.createElement("video");
-        this.#video.setAttribute("playsinline", true); // prevents fullscreen video playing
-        this.#video.srcObject = stream;
-        this.#video.play();
+        this._video = document.createElement("video");
+        this._video.setAttribute("playsinline", true); // prevents fullscreen video playing
+        this._video.srcObject = stream;
+        this._video.play();
 
-        this.#scanning = true;
-        this.#onQRCodeDetected = onQRCodeDetected;
-        requestAnimationFrame(this.#processFrame);
+        this._scanning = true;
+        this._onQRCodeDetected = onQRCodeDetected;
+        requestAnimationFrame(this._processFrame);
         onSetupCompleted(true);
     }
 
@@ -1034,14 +1034,14 @@ QRFileTransfer.QRDecoder = class {
 	 * @public
 	 */
     static stop() {
-        if ( this.#scanning == false ) { return }
-        this.#onQRCodeDetected = null;
-        this.#video.srcObject.getTracks().forEach(track => { track.stop(); });
-        this.#video = null;
-        this.#canvasCtx = null;
-        this.#canvasElement.hidden = true;
+        if ( this._scanning == false ) { return }
+        this._onQRCodeDetected = null;
+        this._video.srcObject.getTracks().forEach(track => { track.stop(); });
+        this._video = null;
+        this._canvasCtx = null;
+        this._canvasElement.hidden = true;
         this.canvasElement = null;
-        this.#scanning = false;
+        this._scanning = false;
     }
 
     /**
@@ -1051,8 +1051,8 @@ QRFileTransfer.QRDecoder = class {
      * @public
      */
     static toggleCameraFeedVisibilityWhileRunning() {
-        this.#showCameraWhileRunning = !this.#showCameraWhileRunning;
-        if (this.#scanning == true && this.#canvasElement !== null) { this.#canvasElement.hidden = !this.#showCameraWhileRunning; }
+        this._showCameraWhileRunning = !this._showCameraWhileRunning;
+        if (this._scanning == true && this._canvasElement !== null) { this._canvasElement.hidden = !this._showCameraWhileRunning; }
     }
 
     /**
@@ -1060,25 +1060,25 @@ QRFileTransfer.QRDecoder = class {
 	 * 
 	 * @private
 	 */
-    static async #processFrame() {
-        if (QRFileTransfer.QRDecoder.#scanning == false) { return }
+    static async _processFrame() {
+        if (QRFileTransfer.QRDecoder._scanning == false) { return }
         let This = QRFileTransfer.QRDecoder;
-        if (This.#video.readyState === This.#video.HAVE_ENOUGH_DATA) {
-            if (This.#showCameraWhileRunning == true) {
-                This.#canvasElement.hidden = false;
+        if (This._video.readyState === This._video.HAVE_ENOUGH_DATA) {
+            if (This._showCameraWhileRunning == true) {
+                This._canvasElement.hidden = false;
             }
-            This.#canvasElement.height = This.#video.videoHeight;
-            This.#canvasElement.width = This.#video.videoWidth;
-            This.#canvasCtx.drawImage(This.#video, 0, 0, This.#canvasElement.width, This.#canvasElement.height);
-            let imageData = This.#canvasCtx.getImageData(0, 0, This.#canvasElement.width, This.#canvasElement.height);
+            This._canvasElement.height = This._video.videoHeight;
+            This._canvasElement.width = This._video.videoWidth;
+            This._canvasCtx.drawImage(This._video, 0, 0, This._canvasElement.width, This._canvasElement.height);
+            let imageData = This._canvasCtx.getImageData(0, 0, This._canvasElement.width, This._canvasElement.height);
             try {
-                let code = await This.#decodeImageData(imageData);
+                let code = await This._decodeImageData(imageData);
                 if (code !== null) {
-                    This.#onQRCodeDetected(code.data)
+                    This._onQRCodeDetected(code.data)
                 }
             } catch(e) { /*console.log(e);*/ }
         }
-        This.#scheduleNextFrame();
+        This._scheduleNextFrame();
     }
 
     /**
@@ -1086,8 +1086,8 @@ QRFileTransfer.QRDecoder = class {
 	 * 
 	 * @private
 	 */
-    static #scheduleNextFrame() {
-        setTimeout(() => { requestAnimationFrame(QRFileTransfer.QRDecoder.#processFrame); }, QRFileTransfer.QRDecoder.scheduleFrameDelay);
+    static _scheduleNextFrame() {
+        setTimeout(() => { requestAnimationFrame(QRFileTransfer.QRDecoder._processFrame); }, QRFileTransfer.QRDecoder.scheduleFrameDelay);
     }
 
     /**
@@ -1097,7 +1097,7 @@ QRFileTransfer.QRDecoder = class {
      * 
      * @return {Promise} the promise which will return the decoded data from the given image data
 	 */
-    static #decodeImageData(imageData) {
+    static _decodeImageData(imageData) {
         return new Promise((resolve, reject) => { 
             try {
               let code = jsQR(imageData.data, imageData.width, imageData.height, { inversionAttempts: "dontInvert" });

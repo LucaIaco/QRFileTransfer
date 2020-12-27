@@ -28,84 +28,16 @@
  * @author Luca Iaconis
  */
 
+ 'strict mode';
 var QRFileTransfer = {};
 
 /**
- * Core class implementation
+ * ======================================================
+ * QRFileTransfer.Core class definition
+ * ======================================================
  */
+'strict mode';
 QRFileTransfer.Core = class {
-
-    /**
-     * Currently displayed view on the screen
-     */
-    static _displayedView = null;
-
-    /**
-     * Reference to the callback called when the user, in Sender mode, picks a file from the input type file
-     */
-    static _onFileChanged = null;
-
-    /**
-     * Reference to the fileworker which is processing the file
-     */
-    static _fileWorker = null;
-
-    /**
-     * Indicates if the Sender/Receiver is currently running
-     */
-    static _isRunning = false;
-
-    /**
-     * The date time value carried by the last received QR Code. this is needed in order to prevent the processing of the same qr code multiple time
-     * in case the Camera is processing the same QR Code.
-     */
-    static _lastReceivedDatetime = null;
-
-    /**
-     * The Sender/Receiver Datetime when the process started
-     */
-    static _startDate = null;
-
-    /**
-     * The timer used for updating and displaying the elapse time
-     */
-    static _elapseTimer = null;
-
-    /**
-     * Enum for the supported Display view options.
-     * - home: Displays the inital home view
-     * - help: Displays the help popup
-     * - sendFile: Displays the "Send file" view
-     * - receiveFile: Displays the "Receive file" view
-     * @readonly
-     */
-    static ViewOption = Object.freeze({
-        home: { id: "homeBox" },
-        help: { id: "helpBox" },
-        sendFile: { id: "sendBox", qrViewId: "senderQRView", cameraCanvasId: "senderCameraCanvas", lblProgressId: "lblProgress", lblElapsTimeId: "lblElapsTimeId", lblFileId: "lblFile", lblChunkInfoId: "lblChunkInfo", },
-        receiveFile: { id: "receiveBox", qrViewId: "receiverQRView", cameraCanvasId: "receiverCameraCanvas", lblProgressId: "lblProgress1", lblElapsTimeId: "lblElapsTimeId1", lblFileId: "lblFile1", lblChunkInfoId: "lblChunkInfo1" }
-    });
-
-    /**
-     * Enum for the supported Chunk types which are transmitted between Sender and Receiver.
-     * - metaInfo: Indicates to the Receiver that a new file transmission is about started, and the Sender is passing all the necessary meta info needed in order for the Receiver to create the FileWorker on his side and be ready to proceed receiving chunks
-     * - metaInfoReceived: Indicates to the Sender that the Received has successfully received the metaInfo data, so that Sender can start sending the file chunks
-     * - okNext: Indicates to the Receiver device that any previously received package is valid based on the provided evalSha256, so he can process the carried base64 block as next chunk, and proceed notifying back the Sender with the new correpsonding evalSha256. If the number of valid received chunks is equal to the toal expected chunks, then the file transfer can be considered completed.
-     * - evalSha256: Indicates to the Sender that the Receiver has received the new chunk and the carried string block is the SHA-256 of the new chunk which needs to be compared on the Sender to evaluate if the chunk is not corrupted. In case it's ok, a new file chunk will be sent to the Receiver, otherwise 'invalidSha256' will be sent to the Receiver along with the previous chunk so that the Receiver can drop the pending chunk and try again b
-     * - invalidSha256: Indicates to the Receiver that the last received chunk on his side is considered corrupt as the sha256 sent to the Sender via 'evalSha256' does not match with the one that the Sender is expecting. In this case the last chunk will be dropped and the Receiver will try to decode again the same chunk from the Sender
-     * - completed: Indicates to the Receiver that the transfer session is over. The receiver should stop all from his side and save on the disk the in-memory buffer as file
-     * - unknown: The carried chunk over QR images is not supported or not recognized
-     * @readonly
-     */
-    static ChunkType = Object.freeze({
-        metaInfo: { id: 0 },
-        metaInfoReceived: { id: 1 },
-        okNext: { id: 2 },
-        evalSha256: { id: 3 },
-        invalidSha256: { id: 4 },
-        completed: { id: 50 },
-        unknown: { id: 100 }
-    });
 
     /**
 	 * Displays the view with the given option on the screen, performing any necessary setup
@@ -577,14 +509,12 @@ QRFileTransfer.Core = class {
 }
 
 /**
- * Utils class implementation
+ * ======================================================
+ * QRFileTransfer.Utils class definition
+ * ======================================================
  */
+'strict mode';
 QRFileTransfer.Utils = class {
-
-    /**
-     * The private reference to the QRCode object in charge of processing the qr code images
-     */
-    static _qrCode = null;
 
     /**
 	 * set the qr code view which will display any generated qr code image on the screen
@@ -707,8 +637,11 @@ QRFileTransfer.Utils = class {
 }
 
 /**
- * FileWorker class implementation
+ * ======================================================
+ * QRFileTransfer.FileWorker class definition
+ * ======================================================
  */
+'strict mode';
 QRFileTransfer.FileWorker = class {
 
     /**
@@ -946,54 +879,12 @@ QRFileTransfer.FileWorker = class {
 }
 
 /**
- * QRDecoder class implementation
+ * ======================================================
+ * QRFileTransfer.QRDecoder class definition
+ * ======================================================
  */
+'strict mode';
 QRFileTransfer.QRDecoder = class {
-
-    /**
-     * Ideal video FPS
-    */
-    static fpsIdeal = 10;
-
-    /**
-     * Max allowed video FPS
-    */
-    static fpsMax = 10;
-
-    /**
-     * Indicates if the video session is running or not
-     */
-    static _scanning = false;
-
-    /*
-    Delay in milliseconds which is used to schedue the process of the next frame from the video stream
-    */
-    static scheduleFrameDelay = 5;
-
-    /**
-     * Reference to the video object which is feeding the image stream
-     */
-    static _video = null;
-
-    /**
-     * Reference to the Canvas DOM element which will be used to render the camera feed
-     */
-    static _canvasElement = null;
-
-    /**
-     * Reference to the 2D context of 'canvasElement'
-     */
-    static _canvasCtx = null;
-
-    /**
-     * Indicates if the camera canvas should be displayed on screen while the session is running
-     */
-    static _showCameraWhileRunning = true;
-
-    /**
-     * The function to be called when a QR Code image is properly decoded and the correpsonding data need to be given back in this callback
-     */
-    static _onQRCodeDetected = null;
 
     /**
 	 * Setup and runs the Camera session in order to scan the image looking for any valid QR Code.
@@ -1106,3 +997,143 @@ QRFileTransfer.QRDecoder = class {
         });
     }
 }
+
+/**
+ * ======================================================
+ * QRFileTransfer.Core class properties
+ * ======================================================
+ */
+
+/**
+ * Currently displayed view on the screen
+ */
+QRFileTransfer.Core._displayedView = null;
+
+/**
+ * Reference to the callback called when the user, in Sender mode, picks a file from the input type file
+ */
+QRFileTransfer.Core._onFileChanged = null;
+
+/**
+ * Reference to the fileworker which is processing the file
+ */
+QRFileTransfer.Core._fileWorker = null;
+
+/**
+ * Indicates if the Sender/Receiver is currently running
+ */
+QRFileTransfer.Core._isRunning = false;
+
+/**
+ * The date time value carried by the last received QR Code. this is needed in order to prevent the processing of the same qr code multiple time
+ * in case the Camera is processing the same QR Code.
+ */
+QRFileTransfer.Core._lastReceivedDatetime = null;
+
+/**
+ * The Sender/Receiver Datetime when the process started
+ */
+QRFileTransfer.Core._startDate = null;
+
+/**
+ * The timer used for updating and displaying the elapse time
+ */
+QRFileTransfer.Core._elapseTimer = null;
+
+/**
+ * Enum for the supported Display view options.
+ * - home: Displays the inital home view
+ * - help: Displays the help popup
+ * - sendFile: Displays the "Send file" view
+ * - receiveFile: Displays the "Receive file" view
+ * @readonly
+ */
+QRFileTransfer.Core.ViewOption = Object.freeze({
+    home: { id: "homeBox" },
+    help: { id: "helpBox" },
+    sendFile: { id: "sendBox", qrViewId: "senderQRView", cameraCanvasId: "senderCameraCanvas", lblProgressId: "lblProgress", lblElapsTimeId: "lblElapsTimeId", lblFileId: "lblFile", lblChunkInfoId: "lblChunkInfo", },
+    receiveFile: { id: "receiveBox", qrViewId: "receiverQRView", cameraCanvasId: "receiverCameraCanvas", lblProgressId: "lblProgress1", lblElapsTimeId: "lblElapsTimeId1", lblFileId: "lblFile1", lblChunkInfoId: "lblChunkInfo1" }
+});
+
+/**
+ * Enum for the supported Chunk types which are transmitted between Sender and Receiver.
+ * - metaInfo: Indicates to the Receiver that a new file transmission is about started, and the Sender is passing all the necessary meta info needed in order for the Receiver to create the FileWorker on his side and be ready to proceed receiving chunks
+ * - metaInfoReceived: Indicates to the Sender that the Received has successfully received the metaInfo data, so that Sender can start sending the file chunks
+ * - okNext: Indicates to the Receiver device that any previously received package is valid based on the provided evalSha256, so he can process the carried base64 block as next chunk, and proceed notifying back the Sender with the new correpsonding evalSha256. If the number of valid received chunks is equal to the toal expected chunks, then the file transfer can be considered completed.
+ * - evalSha256: Indicates to the Sender that the Receiver has received the new chunk and the carried string block is the SHA-256 of the new chunk which needs to be compared on the Sender to evaluate if the chunk is not corrupted. In case it's ok, a new file chunk will be sent to the Receiver, otherwise 'invalidSha256' will be sent to the Receiver along with the previous chunk so that the Receiver can drop the pending chunk and try again b
+ * - invalidSha256: Indicates to the Receiver that the last received chunk on his side is considered corrupt as the sha256 sent to the Sender via 'evalSha256' does not match with the one that the Sender is expecting. In this case the last chunk will be dropped and the Receiver will try to decode again the same chunk from the Sender
+ * - completed: Indicates to the Receiver that the transfer session is over. The receiver should stop all from his side and save on the disk the in-memory buffer as file
+ * - unknown: The carried chunk over QR images is not supported or not recognized
+ * @readonly
+ */
+QRFileTransfer.Core.ChunkType = Object.freeze({
+    metaInfo: { id: 0 },
+    metaInfoReceived: { id: 1 },
+    okNext: { id: 2 },
+    evalSha256: { id: 3 },
+    invalidSha256: { id: 4 },
+    completed: { id: 50 },
+    unknown: { id: 100 }
+});
+
+/**
+ * ======================================================
+ * QRFileTransfer.Utils class properties
+ * ======================================================
+ */
+
+/**
+ * The private reference to the QRCode object in charge of processing the qr code images
+ */
+QRFileTransfer.Utils._qrCode = null;
+
+/**
+ * ======================================================
+ * QRFileTransfer.QRDecoder class properties
+ * ======================================================
+ */
+
+/**
+ * Ideal video FPS
+*/
+QRFileTransfer.QRDecoder.fpsIdeal = 10;
+
+/**
+ * Max allowed video FPS
+*/
+QRFileTransfer.QRDecoder.fpsMax = 10;
+
+/**
+ * Indicates if the video session is running or not
+ */
+QRFileTransfer.QRDecoder._scanning = false;
+
+/*
+Delay in milliseconds which is used to schedue the process of the next frame from the video stream
+*/
+QRFileTransfer.QRDecoder.scheduleFrameDelay = 5;
+
+/**
+ * Reference to the video object which is feeding the image stream
+ */
+QRFileTransfer.QRDecoder._video = null;
+
+/**
+ * Reference to the Canvas DOM element which will be used to render the camera feed
+ */
+QRFileTransfer.QRDecoder._canvasElement = null;
+
+/**
+ * Reference to the 2D context of 'canvasElement'
+ */
+QRFileTransfer.QRDecoder._canvasCtx = null;
+
+/**
+ * Indicates if the camera canvas should be displayed on screen while the session is running
+ */
+QRFileTransfer.QRDecoder._showCameraWhileRunning = true;
+
+/**
+ * The function to be called when a QR Code image is properly decoded and the correpsonding data need to be given back in this callback
+ */
+QRFileTransfer.QRDecoder._onQRCodeDetected = null;

@@ -28,7 +28,7 @@
  * @author Luca Iaconis
  */
 
- 'strict mode';
+'strict mode';
 var QRFileTransfer = {};
 
 /**
@@ -274,15 +274,17 @@ QRFileTransfer.Core = class {
 	 */
     static _updateQRImage(chunkType, input) {
         if (QRFileTransfer.Core._isSenderReceiverView() == false ) { return; }
-        if (input === null && document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).getElementsByTagName("img").length > 0 ) {
+        if (input === null) {
             document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).style.display = "none";
-            document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).getElementsByTagName("img")[0].src = "";
+            let svg = document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).getElementsByTagName("svg")[0];
+            svg.setAttribute("viewBox", "0 0 0 0");
+            svg.querySelector("path").removeAttribute("d");
             return;
         }
         document.getElementById(QRFileTransfer.Core._displayedView.qrViewId).style.display = null;
         let qrData = { "ckTId" : chunkType.id, "bd": input.trim(), "dt": Date.now() }
         
-        QRFileTransfer.Utils.generateQRCode(JSON.stringify(qrData));
+        QRFileTransfer.Utils.generateQRCode(QRFileTransfer.Core._displayedView.qrViewId, JSON.stringify(qrData));
     }
 
     /**
@@ -444,8 +446,6 @@ QRFileTransfer.Core = class {
      * @public
      */
     static _setupSender() {
-        // Attach the view which needs to be used for displaying the generated QR Codes
-        QRFileTransfer.Utils.setQRCodeViewer(QRFileTransfer.Core._displayedView.qrViewId,512,512);
 
         // Configure the controls to the initial state
         document.getElementById("btnInputFile").disabled = false;
@@ -495,8 +495,6 @@ QRFileTransfer.Core = class {
      * @public
      */
     static _setupReceiver() {
-        // Attach the view which needs to be used for displaying the generated QR Codes
-        QRFileTransfer.Utils.setQRCodeViewer(QRFileTransfer.Core._displayedView.qrViewId,512,512);
 
         // Configure the control to the initial state
         document.getElementById("btnStartReceiving").disabled = false;
@@ -517,38 +515,31 @@ QRFileTransfer.Core = class {
 QRFileTransfer.Utils = class {
 
     /**
-	 * set the qr code view which will display any generated qr code image on the screen
-	 * 
-	 * @public
-	 * @param {String} domID the dom element identifier which will display the qr code image
-	 * @param {Number} qrImageWidth the expected width to be used for the generated image
-     * @param {Number} qrImageHeight the expected height to be used for the generated image
-     * 
-     * @return {Boolean} true if the QR Code viewer is set succesfully, false otherwise
-	 */
-    static setQRCodeViewer(domID,qrImageWidth,qrImageHeight) {
-        if (document.getElementById(domID) === null) { return false }
-        document.getElementById(domID).innerHTML = "";
-        QRFileTransfer.Utils._qrCode = new QRCode(document.getElementById(domID), {
-            width : qrImageWidth,
-            height : qrImageHeight,
-            correctLevel : QRCode.CorrectLevel.M
-        });
-        return true
-    }
-
-    /**
 	 * Generates the qr code image associated to the input string and shows it into the previously assigned viewer
 	 * 
 	 * @public
+     * @param {String} domID the dom element identifier which will display the qr code image
 	 * @param {String} input the input text to be represented as QR Code image
      * 
      * @return {Boolean} true if the QR Code viewer could be generated, false if no qr code object was setup 
 	 */
-    static generateQRCode(input) {
-        if (QRFileTransfer.Utils._qrCode === null) { return false }   
+    static generateQRCode(domID, input) {
+
+        let qrContainer = document.getElementById(domID);
+        if (qrContainer === null) { return false; }
+        let svgElems = qrContainer.getElementsByTagName("svg");
+        if (svgElems.length === 0) { return false; }
+        let svg = svgElems[0];
+        
         try {
-            QRFileTransfer.Utils._qrCode.makeCode(input);
+            let segs = qrcodegen.QrSegment.makeSegments(input);
+            //qrcodegen.QrCode.encodeSegments(segs, ecl, minVer, maxVer, mask, boostEcc);
+            let qr = qrcodegen.QrCode.encodeSegments(segs, qrcodegen.QrCode.Ecc.MEDIUM, 1, 40, -1, true);
+            let code = qr.toSvgString(0);// create svg path with border 0
+            let viewBox = / viewBox="([^"]*)"/.exec(code)[1];
+            let pathD = / d="([^"]*)"/.exec(code)[1];
+            svg.setAttribute("viewBox", viewBox);
+            svg.querySelector("path").setAttribute("d", pathD);
             return true;
         } catch(e) {
             console.error("Unable to generate the QR from the input (" + input.length + " Bytes). " + e)
@@ -1075,17 +1066,6 @@ QRFileTransfer.Core.ChunkType = Object.freeze({
     completed: { id: 50 },
     unknown: { id: 100 }
 });
-
-/**
- * ======================================================
- * QRFileTransfer.Utils class properties
- * ======================================================
- */
-
-/**
- * The private reference to the QRCode object in charge of processing the qr code images
- */
-QRFileTransfer.Utils._qrCode = null;
 
 /**
  * ======================================================

@@ -4,7 +4,7 @@
         <meta charset="UTF-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no" />
         <link rel="stylesheet" href="style.css"/>
-        <script type="text/javascript" src="./js/qrcode.min.js"></script>
+        <script type="text/javascript" src="./js/qrcodegen.js"></script>
         <script type="text/javascript" src="./js/jsQR.js"></script>
         <script type="text/javascript" src="./js/QRFileTransfer.js"></script>
     </head>
@@ -65,7 +65,7 @@
                 <b>Dependencies:</b> 
                 <ul>
                     <li>This tool is written using Vanilla Javascript, HTML and CSS, using the below  3rd-party libraries for QR encoding/decoding</li>
-                    <li><a href="https://github.com/davidshimjs/qrcodejs">qrcodejs</a> for QR encoding</li>
+                    <li><a href="https://github.com/nayuki/QR-Code-generator">QR-Code-generator</a> for QR encoding</li>
                     <li><a href="https://github.com/cozmo/jsQR">jsQR</a> for QR decoding</li>
                 </ul>
                 <b>Author:&nbsp;</b>LucaIaco</a></br></br>
@@ -126,7 +126,11 @@
                     </tr>
                 </table>
             </div>
-            <div id="senderQRView" class="qrBox qrBoxFull" style="display: none;"></div>
+            <div id="senderQRView" class="qrBox qrBoxFull" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; object-fit:contain;" stroke="none" viewBox="0 0 0 0">
+                    <rect width="100%" height="100%" fill="#FFFFFF"/> <path fill="#000000"/> 
+                </svg>
+            </div>
             <canvas id="senderCameraCanvas" class="roundedBorder cameraBox" hidden></canvas>
             <div id="togglesContainer" style="position: absolute; bottom: 15px;width: 96%; display: none; ">
                 <button class="buttonStyle" style="float: left;" onclick="QRFileTransfer.QRDecoder.toggleCameraFeedVisibilityWhileRunning()">Toggle camera</button>
@@ -168,7 +172,11 @@
                     </tr>
                 </table>
             </div>
-            <div id="receiverQRView" class="qrBox qrBoxFull" style="display: none;"></div>
+            <div id="receiverQRView" class="qrBox qrBoxFull" style="display: none;">
+                <svg xmlns="http://www.w3.org/2000/svg" style="width: 100%; height: 100%; object-fit:contain;" stroke="none" viewBox="0 0 0 0">
+                    <rect width="100%" height="100%" fill="#FFFFFF"/> <path fill="#000000"/> 
+                </svg>
+            </div>
             <canvas id="receiverCameraCanvas" class="roundedBorder cameraBox" hidden></canvas>
             <div id="togglesContainer1" style="position: absolute; bottom: 15px;width: 96%; display: none;">
                 <button class="buttonStyle" style="float: left;" onclick="QRFileTransfer.QRDecoder.toggleCameraFeedVisibilityWhileRunning()">Toggle camera</button>

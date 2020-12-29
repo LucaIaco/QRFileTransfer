@@ -37,3 +37,5 @@ This tool allows you to transmit files between two devices relying <b>EXCLUSIVEL
                     <li><a href="https://github.com/nayuki/QR-Code-generator">QR-Code-generator</a> for QR encoding</li>
                     <li><a href="https://github.com/cozmo/jsQR">jsQR</a> for QR decoding</li>
                 </ul>
+                <b>Samples:</b> 
+                <img src="./docs/sample1.jpg" />

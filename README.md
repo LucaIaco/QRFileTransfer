@@ -20,6 +20,7 @@ This tool allows you to transmit files between two devices relying <b>EXCLUSIVEL
                     <li>The Sender device starts the session from "Send file" and picks the file which is intended to be transmitted to the Receiver device</li>
                     <li>The Sender device can change the chunk size if needed or just press directly on "Start sending" </li>
                     <li>The Sender device allows the camera permission asked by the browser</li>
+                    <li>For both Sender and Receiver, you can click on "Toggle Camera" to hide/show the camera view, or click on "Toggle QR" to show the QR full screen (recommended) or not</li>
                 </ul>
                 <b>How does it work:</b> 
                 <ul>

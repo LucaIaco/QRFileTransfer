@@ -23,7 +23,7 @@
  * 
  * @fileoverview
  * - QRFileTransfer namespace contains all the classes needed to make the tool to work
- * - this library depends on the library 'qrcode.js' and 'jsQR.js'. Refer to https://github.com/davidshimjs/qrcodejs and https://github.com/cozmo/jsQR
+ * - this library depends on the library 'qrcodegen.js' and 'jsQR.js'. Refer to https://github.com/nayuki/QR-Code-generator and https://github.com/cozmo/jsQR
  * 
  * @author Luca Iaconis
  */
